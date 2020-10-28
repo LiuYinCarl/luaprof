@@ -56,7 +56,19 @@ function profiler:_profiling_call(funcInfo)
     local len = #self.curCallStack
     if len ~= 0 then
         local lastFunc = self.curCallStack[len]
-        table.insert(lastFunc.callFuncs, funcStatistics)
+
+        -- 防止将一个函数多次加入到另一个函数的调用记录表中
+        local added = false
+        for _, f in ipairs(lastFunc.callFuncs) do
+            if f.name == funcStatistics.name then
+                added = true
+                break
+            end
+        end
+
+        if not added then
+            table.insert(lastFunc.callFuncs, funcStatistics)
+        end
     end
     -- 函数信息推入调用栈
     table.insert(self.curCallStack, funcStatistics)
