@@ -59,24 +59,20 @@ end
 
 -- 测试递归调用
 function recursion(n)
-    if n == 0 then
+    if n <= 0 then
         return
     end
     recursion(n-1)
 end
 
-
-
-
 function main()
     level1()
-
     recursionA(6)
-
-    recursion(5)
+    recursion(6)
 end
 
 
 profiler:start()
 main()
+profiler:stop()
 profiler:print_funcMap()

@@ -61,18 +61,23 @@ function profiler:_profiling_call(funcInfo)
     -- 函数信息推入调用栈
     table.insert(self.curCallStack, funcStatistics)
 
+    local tmpFuncMap = {}
     for _, f in ipairs(self.curCallStack) do
-        f.callCnt = f.callCnt + 1
+        -- 在递归的情况下，调用栈中可以出现一个函数的信息多次，下面代码防止对这些函数多次计数
+        if not tmpFuncMap[f.name] then
+            f.callCnt = f.callCnt + 1
+            tmpFuncMap[f.name] = true
+        end
     end
 end
 
 
 --  监控函数返回
 function profiler:_profiling_return(funcInfo)
+    -- 调用set_hook()函数后会执行该函数，所以不能做 assert
     -- assert(#self.curCallStack > 0)
 
     if #self.curCallStack <= 0 then
-        print("#self.curCallStack =", #self.curCallStack)
         return
     end
 
@@ -83,6 +88,8 @@ end
 -- deepth 调用栈深度
 function profiler:print_funcMap()
     assert(self.startFunc)
+
+    print("startFunc:", self.startFunc.name)
 
     self:_print_funcMap(self.startFunc, 0, {})
 end
@@ -95,7 +102,7 @@ function profiler:_print_funcMap(func, deepth, tbPrintedFunc)
 
     self:_print_blank(deepth)
 
-    local info = string.format("%s:(%.2f)\n", func.name, func.callCnt / self.totalCallCount)
+    local info = string.format("%s:(%d  %.2f)\n", func.name, func.callCnt, func.callCnt / self.totalCallCount)
     io.write(info)
 
     tbPrintedFunc[func.name] = true
@@ -113,7 +120,7 @@ end
 function profiler:_print_blank(deepth)
     local blank = "|  "
     local str = ""
-    for i = 0, deepth do
+    for i = 0, deepth-1 do
         str = str .. blank
     end
     io.write(str)
@@ -133,6 +140,10 @@ end
 
 function profiler:start()
     debug.sethook(profiler._profiling_handler, "cr", 0)
+end
+
+function profiler:stop()
+    debug.sethook()
 end
 
 -- 返回模块
