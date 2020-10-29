@@ -5,8 +5,11 @@
 
 
 ## 效果图
-![image](https://github.com/LiuYinCarl/luaprof/blob/main/%E6%95%88%E6%9E%9C%E5%9B%BE.jpg)
 
+终端打印图
 
-## graphviz调用关系导出图
-![image](https://github.com/LiuYinCarl/luaprof/blob/main/graphviz%E8%B0%83%E7%94%A8%E5%85%B3%E7%B3%BB%E5%AF%BC%E5%87%BA%E5%9B%BE.png)
+![image](image/效果图.jpg)
+
+graphviz调用关系导出图
+
+![image](image/调用关系导出图.png)
