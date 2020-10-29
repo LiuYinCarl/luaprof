@@ -24,6 +24,15 @@ profiler.startFunc = nil
 profiler.totalCallCount = 0
 
 
+-- 图表节点颜色设置
+local nodeLevel = {
+    {val = 0.8, cor = "color=red"},
+    {val = 0.5, cor = "color=yellow"},
+    {val = 0.3, cor = "color=blue"},
+    {val = 0.0, cor = "color=black"},
+}
+
+
 -- 获取函数名
 function profiler:_get_func_name(funcInfo)
     assert(funcInfo)
@@ -147,6 +156,76 @@ function profiler._profiling_handler(hookType)
     elseif hookType == "return" then
         profiler:_profiling_return(funcInfo)
     end
+end
+
+function profiler:gen_node_define()
+    assert(self.startFunc)
+
+    self.pFile:write("//节点定义\n")
+    self:_gen_node_define(self.startFunc, {})
+    self.pFile:write("\n\n")
+end
+
+function profiler:_gen_node_define(func, tbVisitedFunc)
+    if tbVisitedFunc[func.name] then
+        return
+    end
+    
+    -- 节点颜色选取
+    local warmVal = func.callCnt / self.totalCallCount
+    local color = ""
+    for _, elem in ipairs(nodeLevel) do
+        if warmVal > elem.val then
+            color = elem.cor
+            break
+        end
+    end
+
+    local info = string.format("%s[label=\"%s %d %.2f\" %s];\n", func.name, func.name, func.callCnt, func.callCnt / self.totalCallCount, color)
+    self.pFile:write(info)
+
+    tbVisitedFunc[func.name] = true
+
+    for _, f in ipairs(func.callFuncs) do
+        self:_gen_node_define(f, tbVisitedFunc)
+    end
+end
+
+function profiler:gen_graph()
+    assert(self.startFunc)
+
+    self.pFile = io.open("graph.dot", "w")
+    self.pFile:write("digraph {\n")
+
+    self:gen_node_define(self.startFunc, {})
+
+    self:_gen_graph(self.startFunc, {}, {})
+
+    self.pFile:write("}\n")
+    self.pFile:close()
+end
+
+function profiler:_gen_graph(func, tbVisitedFunc, tbVisitStack)
+    if tbVisitedFunc[func.name] then
+        return
+    end
+
+    local len = #tbVisitStack
+    if len > 0 then
+        local lastFunc = tbVisitStack[len]
+        local info = string.format("%s -> %s;\n", lastFunc.name, func.name)
+        self.pFile:write(info)
+    end
+
+    tbVisitedFunc[func.name] = true
+    table.insert(tbVisitStack, func)
+
+    for _, f in ipairs(func.callFuncs) do
+        self:_gen_graph(f, tbVisitedFunc, tbVisitStack)
+    end
+
+    tbVisitedFunc[func.name] = nil
+    table.remove(tbVisitStack)
 end
 
 

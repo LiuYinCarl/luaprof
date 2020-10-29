@@ -75,4 +75,5 @@ end
 profiler:start()
 main()
 profiler:stop()
+profiler:gen_graph()
 profiler:print_funcMap()
