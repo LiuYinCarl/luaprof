@@ -105,7 +105,7 @@ end
 
 function main()
     level1()
-    recursionA(6)
+    recursionA(4)
     recursion(6)
     multiSuspend()
 end

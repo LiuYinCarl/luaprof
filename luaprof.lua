@@ -1,10 +1,7 @@
 -- lua 性能监控程序
 
 -- todo
--- 函数同名如何处理（使用文件名+函数名来表示函数名）
--- 递归调用如何处理
--- funcA -> funcB -> funcA 递归如何处理
--- 如果调用太复杂的话，对于少于一定数量的调用，可以不做显示       
+-- 函数同名如何处理（使用文件名+函数名来表示函数名）     
 
 local proftimer = require("timerlib")
 
@@ -227,10 +224,9 @@ function profiler:_print_funcMap(func, deepth, tbPrintedFunc)
         self:_print_funcMap(f, deepth+1, tbPrintedFunc)
     end
 
-    -- 清楚标记
+    -- 清除标记
     tbPrintedFunc[func.name] = nil
 end
-
 
 function profiler:_print_blank(deepth)
     local blank = "|  "
@@ -255,7 +251,7 @@ end
 function profiler:gen_node_define()
     assert(self.startFunc)
 
-    self.pFile:write("//节点定义\n")
+    self.pFile:write("// node define\n")
     self:_gen_node_define(self.startFunc, {})
     self.pFile:write("\n\n")
 end
@@ -274,8 +270,6 @@ function profiler:_gen_node_define(func, tbVisitedFunc)
             break
         end
     end
-
-    -- print("func.show:", func.show)
 
     if func.show then
         local info = string.format("%s[label=\"%s\\n %d %.2f%% %.3fs\" %s];\n", 
@@ -303,10 +297,10 @@ end
 -- 调用这个函数，说明开启了剪枝，这个函数用来确定要绘制的节点
 function profiler:_check_node(func, tbVisitedFunc)
     if tbVisitedFunc[func.name] then
-        return func.show
+        return func.show  -- todo 这样子会导致递归函数一定会展示
     end
 
-    tbVisitedFunc[func.name] = true  -- todo 这样子是否会导致递归函数一定会展示
+    tbVisitedFunc[func.name] = true  
 
     local showSelfNode = true  -- 默认绘制本节点
 
