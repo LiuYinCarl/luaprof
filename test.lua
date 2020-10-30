@@ -1,4 +1,5 @@
 local profiler = require("luaprof")
+local proftimer = require("timerlib")
 
 
 -- 测试链式调用
@@ -78,21 +79,27 @@ function suspend1()
 end
 
 function suspend2()
-    for i = 1, 1000 do
-        local tmp = 10 * 10
-    end
-end
-
-function suspend3()
     for i = 1, 10000 do
         local tmp = 10 * 10
     end
 end
 
-function suspend4()
-    for i = 1, 100000 do
+function suspend3()
+    -- local begintime = proftimer.nowMicroSecond()
+    for i = 1, 1000000 do
         local tmp = 10 * 10
     end
+    -- local endtime = proftimer.nowMicroSecond()
+    -- print("suspend3 cost:", (endtime - begintime) / 1000000.0)
+end
+
+function suspend4()
+    -- local begintime = proftimer.nowMicroSecond()
+    for i = 1, 100000000 do
+        local tmp = 10 * 10
+    end
+    -- local endtime = proftimer.nowMicroSecond()
+    -- print("suspend4 cost:", (endtime - begintime) / 1000000.0)
 end
 
 
@@ -109,5 +116,6 @@ end
 profiler:start()
 main()
 profiler:stop()
+-- profiler:_print_all_func()
 profiler:gen_graph()
 profiler:print_funcMap()

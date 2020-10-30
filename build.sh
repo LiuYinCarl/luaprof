@@ -1,0 +1,1 @@
+ gcc timer.c -fPIC -shared -o timerlib.so

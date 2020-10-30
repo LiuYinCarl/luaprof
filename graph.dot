@@ -1,25 +1,13 @@
 digraph {
 //节点定义
-main[label="main 21 0.91" color=red];
-level1[label="level1 6 0.26" color=black];
-level2[label="level2 5 0.22" color=black];
-level3[label="level3 4 0.17" color=black];
-level4[label="level4 3 0.13" color=black];
-level5[label="level5 2 0.09" color=black];
-level6[label="level6 1 0.04" color=black];
-recursionA[label="recursionA 7 0.30" color=blue];
-recursionB[label="recursionB 6 0.26" color=black];
-recursionC[label="recursionC 5 0.22" color=black];
-recursionD[label="recursionD 4 0.17" color=black];
-recursion[label="recursion 7 0.30" color=blue];
+main[label="main\n 1 0.04% 0.000s" color=blue];
+recursionA[label="recursionA\n 2 0.08% 0.000s" color=yellow];
+recursionB[label="recursionB\n 2 0.08% 0.000s" color=yellow];
+recursionC[label="recursionC\n 2 0.08% 0.000s" color=yellow];
+recursionD[label="recursionD\n 1 0.04% 0.000s" color=blue];
+recursion[label="recursion\n 7 0.27% 0.000s" color=red];
 
 
-main -> level1;
-level1 -> level2;
-level2 -> level3;
-level3 -> level4;
-level4 -> level5;
-level5 -> level6;
 main -> recursionA;
 recursionA -> recursionB;
 recursionB -> recursionC;
