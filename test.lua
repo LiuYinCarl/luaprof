@@ -55,8 +55,6 @@ function recursionD(n)
     recursionA(n-1)
 end
 
-
-
 -- 测试递归调用
 function recursion(n)
     if n <= 0 then
@@ -65,11 +63,47 @@ function recursion(n)
     recursion(n-1)
 end
 
+-- 测试函数被打断多次
+function multiSuspend()
+    suspend1()
+    suspend2()
+    suspend3()
+    suspend4()
+end
+
+function suspend1()
+    for i = 1, 100 do
+        local tmp = 10 * 10
+    end
+end
+
+function suspend2()
+    for i = 1, 1000 do
+        local tmp = 10 * 10
+    end
+end
+
+function suspend3()
+    for i = 1, 10000 do
+        local tmp = 10 * 10
+    end
+end
+
+function suspend4()
+    for i = 1, 100000 do
+        local tmp = 10 * 10
+    end
+end
+
+
 function main()
     level1()
     recursionA(6)
     recursion(6)
+    multiSuspend()
 end
+
+
 
 
 profiler:start()

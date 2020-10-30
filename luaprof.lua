@@ -7,6 +7,15 @@
 -- 如果调用太复杂的话，对于少于一定数量的调用，可以不做显示
 
 
+-- 对于多次暂停的函数，计算函数的实际运行用时
+-- function funcA()
+--              -- 在这个时间时间点：startTime = t1, suspendTime = 0, resumeTime = 0, totalTime = 0
+--     funcB()  -- 在这个时间时间点：startTime = t1, suspendTime = t2, resumeTime = 0, totalTime = t2-t1
+--              -- 在这个时间时间点：startTime = t1, suspendTime = t2, resumeTime = t3, totalTime = t2-t1
+--     funcC()  -- 在这个时间时间点：startTime = t1, suspendTime = t4, resumeTime = t3, totalTime = (t2-t1) + (t4-t3)
+--              -- 在这个时间时间点：startTime = t1, suspendTime = t4, resumeTime = t5, totalTime = (t2-t1) + (t4-t3)
+-- end          -- 在这个时间时间点：startTime = t1, suspendTime = t4, resumeTime = t5, totalTime = (t2-t1) + (t4-t3) + (now-t5)
+--              
 
 
 
@@ -16,10 +25,10 @@ local profiler = {}
 --------- 配置项  -----------
 
 -- 是否开启剪枝
-profiler.openReduceBranch
+profiler.openReduceBranch = true
 -- 开启剪枝时的剪枝的界限，对低于配置数量的叶子节点不显示， 注意，这个选项时递归的，
 -- 当一个父节点的所有叶子节点都不显示的时候，这个父节点变成新的叶子节点，也要进行剪枝判断
-profiler.reduceBranchCallCount
+profiler.reduceBranchCallCount = 10 -- 对调用次数少于10次的函数不展示
 
 -- 统计结果展示函数的真实被调用次数还是它出现在调用栈中的次数之和（它自身的被调用次数+它调用的函数的次数+它调用的函数调用的函数的次数+...）
 profiler.showRealCalledCount = true
@@ -33,7 +42,7 @@ profiler.curCallStack = {}
 profiler.callMap = {}
 -- 全局函数调用次数统计表
 profiler.funcCallInfoTable = {}
--- k: funcName v:funcStatistics
+-- k: funcName v:funcState
 profiler.funcMap = {}
 -- 记录启动函数
 profiler.startFunc = nil
@@ -61,43 +70,54 @@ end
 -- 监控函数调用
 function profiler:_profiling_call(funcInfo)
     self.totalCallCount = self.totalCallCount + 1
-
     local funcName = self:_get_func_name(funcInfo)
+    -- 缓存当前时间，避免多次调用 os.clock()
+    local nowTime = os.clock()
 
     -- 检查这个函数之前是否出现过，没出现过则添加到 profiler.funcMap
-    local funcStatistics = self.funcMap[funcName]
-    if not funcStatistics then
-        funcStatistics = {
+    local funcState = self.funcMap[funcName]
+    if not funcState then
+        funcState = {
             name = funcName,    -- 函数名
             callCnt = 0,        -- 被调用次数
             callFuncs = {}      -- 本函数调用的函数
+            resumeTime = nowTime  -- 函数调用开始时间或者函数被中断后重新获得控制权的时间
+            suspendTime = 0, -- 函数暂时时间，当该函数调用其他函数的时候需要设置
+            totalRunTime = 0  --  函数的总运行时间 
         }
-        self.funcMap[funcName] = funcStatistics
+        self.funcMap[funcName] = funcState
         -- 记录第一个被调用的函数
         if not self.startFunc then
-            self.startFunc = funcStatistics
+            self.startFunc = funcState
         end
+    else -- 这个函数之前被调用过，函数信息已经创建了
+        funcState.resumeTime = nowTime
+        funcState.suspendTime = 0,
     end
 
     local len = #self.curCallStack
     if len ~= 0 then
+        -- 获取该函数的主调函数
         local lastFunc = self.curCallStack[len]
 
         -- 防止将一个函数多次加入到另一个函数的调用记录表中
         local added = false
         for _, f in ipairs(lastFunc.callFuncs) do
-            if f.name == funcStatistics.name then
+            if f.name == funcState.name then
                 added = true
                 break
             end
         end
-
         if not added then
-            table.insert(lastFunc.callFuncs, funcStatistics)
+            table.insert(lastFunc.callFuncs, funcState)
         end
+        
+        -- 累计主调函数的运行用时
+        lastFunc.suspendTime = nowTime
+        lastFunc.totalRunTime = lastFunc.totalRunTime + (lastFunc.suspendTime - lastFunc.resumeTime)
     end
     -- 函数信息推入调用栈
-    table.insert(self.curCallStack, funcStatistics)
+    table.insert(self.curCallStack, funcState)
 
     local tmpFuncMap = {}
     for _, f in ipairs(self.curCallStack) do
@@ -115,12 +135,24 @@ function profiler:_profiling_return(funcInfo)
     -- 调用set_hook()函数后会执行该函数，所以不能做 assert
     -- assert(#self.curCallStack > 0)
 
-    if #self.curCallStack <= 0 then
-        return
-    end
+    local len = #self.curCallStack
+    assert(len <= 0)
+
+    local nowTime = os.clock()
+
+
+    -- 累计本函数的运行时间
+    local curFunc = self.curCallStack[len]
+    curFunc.totalRunTime = curFunc.totalRunTime + (nowTime - curFunc.suspendTime)
 
     -- 函数信息从调用栈推出
     table.remove(self.curCallStack)
+
+    -- 设置该函数的主调函数的resumeTime
+    if len > 1 then
+        local lastFunc = self.curCallStack[len-1]
+        lastFunc.resumeTime = nowTime
+    end
 end
 
 -- deepth 调用栈深度
