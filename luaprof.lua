@@ -324,7 +324,7 @@ end
 function profiler:gen_graph()
     assert(self.startFunc)
 
-    self.pFile = io.open("graph.dot", "w")
+    self.pFile = io.open("luaprof.dot", "w")
     self.pFile:write("digraph {\n")
 
     self:check_node()

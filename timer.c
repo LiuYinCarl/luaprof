@@ -1,3 +1,5 @@
+// 由于 Lua 提供的 os.clock() 函数获取时间存在很大误差，所以这里使用 Lua C 拓展编写获取时间的函数
+
 #include <lua.h>
 #include <lauxlib.h>
 #include <lualib.h>
@@ -30,6 +32,7 @@ int gettimeofday(struct timeval *tp, void *tzp)
 }
 #endif
 
+// 获取当前时间距离 1970.1.1 的微秒数
 static int nowMicroSecond(lua_State *L)
 {
     struct timeval tv;
