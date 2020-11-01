@@ -1,7 +1,7 @@
 -- lua 性能监控程序
 
 -- todo
--- 函数同名如何处理（使用文件名+函数名来表示函数名）     
+-- 添加按函数执行时间进行剪枝的功能    
 
 -- NOTE: 如果找不到 C 模块的话，就使用 os.clock() 替代模块中的函数，但是要注意，C模块中返回的是时间戳，替代函数返回的是程序从启动后经过的时间
 local _loadModuleSucc, proftimer = pcall(require, "timerlib")
@@ -79,8 +79,8 @@ end
 -- 获取函数名
 function profiler:_get_func_name(funcInfo)
     assert(funcInfo)
-
-    local name = funcInfo.name or "anonymous"
+    -- 返回函数名:行号
+    local name = funcInfo.name .. ":" .. funcInfo.currentline or "anonymous"
     return name
 end
 
@@ -232,7 +232,7 @@ function profiler:_print_funcMap(func, deepth, tbPrintedFunc)
 
     self:_print_blank(deepth)
 
-    local info = string.format("%s:(%d  %.2f%% %.3fs)\n", 
+    local info = string.format("%s(%d %.2f%% %.3fs)\n", 
                     func.name, func.callCnt, func.callCnt/self.totalCallCount, func.totalRunTime/1000000)
     io.write(info)
 
@@ -258,7 +258,7 @@ end
 
 function profiler._profiling_handler(hookType)
     -- 拿到被调用函数的函数名和文件名，函数定义的起始和结束行号
-    local funcInfo = debug.getinfo(2, "nS")
+    local funcInfo = debug.getinfo(2, "nlS")
 
     if hookType == "call" then
         profiler:_profiling_call(funcInfo)
