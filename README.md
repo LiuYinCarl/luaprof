@@ -36,6 +36,21 @@ sudo apt-get install lua5.3-dev
 
 安装完头文件后，执行 `sh build.sh` 即可编译出 `timerlib.so` 动态库
 
+为了将 `*.dot` 文件转化为图像，需要安装 graphviz
+
+在 Ununtu 中安装方式为
+```
+sudo aot-get install graphviz
+```
+在windows 下需要下载 graphviz 自己手动安装，安装后之后将安装路径添加到系统路径
+[graphviz下载地址](https://www2.graphviz.org/Packages/stable/windows/)
+
+
+为了能方便的使用 graphviz，推荐安装vscode插件Graphviz Preview(作者:EFanZh)。安装完插件后，打开 `.dot` 后缀文件就可以方便地预览和导出图像了。使用示意图
+
+![image](image/graphviz插件使用示意图.jpg)
+
+
 
 
 ## 参考
