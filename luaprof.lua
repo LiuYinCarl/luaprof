@@ -3,7 +3,26 @@
 -- todo
 -- 函数同名如何处理（使用文件名+函数名来表示函数名）     
 
-local proftimer = require("timerlib")
+-- NOTE: 如果找不到 C 模块的话，就使用 os.clock() 替代模块中的函数，但是要注意，C模块中返回的是时间戳，替代函数返回的是程序从启动后经过的时间
+local _loadModuleSucc, proftimer = pcall(require, "timerlib")
+if not _loadModuleSucc then
+    print("ERROR: the C extern module 'timerlib' not found, use os.clock() to replace! the millisecTimestamp/microsecTimestamp. the functons will return the millisecond/microsecond since program start.")
+    proftimer = {
+        millisecTimestamp = function()
+            local now = function()
+                return 1000 * os.clock()
+            end
+            return now()
+        end,
+
+        microsecTimestamp = function()
+            local now = function()
+                return 1000000 * os.clock()
+            end
+            return now()
+        end,
+    }
+end
 
 -- 定义模块
 local profiler = {}
@@ -76,8 +95,8 @@ function profiler:_profiling_call(funcInfo)
 
     self.totalCallCount = self.totalCallCount + 1
 
-    -- 缓存当前时间，避免多次调用 proftimer.nowMicroSecond()
-    local nowTime = proftimer.nowMicroSecond()
+    -- 缓存当前时间，避免多次调用 proftimer.microsecTimestamp()
+    local nowTime = proftimer.microsecTimestamp()
 
     -- 检查这个函数之前是否出现过，没出现过则添加到 profiler.funcMap
     local funcState = self.funcMap[funcName]
@@ -168,7 +187,7 @@ function profiler:_profiling_return(funcInfo)
         return
     end
 
-    local nowTime = proftimer.nowMicroSecond()
+    local nowTime = proftimer.microsecTimestamp()
 
     -- 累计本函数的运行时间
     local curFunc = self.curCallStack[len]

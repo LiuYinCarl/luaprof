@@ -1,8 +1,8 @@
 // 由于 Lua 提供的 os.clock() 函数获取时间存在很大误差，所以这里使用 Lua C 拓展编写获取时间的函数
 
-#include <lua.h>
-#include <lauxlib.h>
-#include <lualib.h>
+#include <lua5.3/lua.h>
+#include <lua5.3/lauxlib.h>
+#include <lua5.3/lualib.h>
 #include <stdint.h>
 #include <time.h>
 
@@ -32,8 +32,8 @@ int gettimeofday(struct timeval *tp, void *tzp)
 }
 #endif
 
-// 获取当前时间距离 1970.1.1 的微秒数
-static int nowMicroSecond(lua_State *L)
+// 获取微秒时间戳
+static int microsecTimestamp(lua_State *L)
 {
     struct timeval tv;
     gettimeofday(&tv, NULL);
@@ -43,8 +43,20 @@ static int nowMicroSecond(lua_State *L)
     return 1;
 }
 
+// 获取毫秒时间戳
+static int millisecTimestamp(lua_State *L) {
+        struct timeval tv;
+        gettimeofday(&tv, NULL);
+        int64_t n = tv.tv_sec * 1000000 + tv.tv_usec;
+        n /= 1000;
+
+        lua_pushnumber(L, n);
+        return 1;
+}
+
 static const struct luaL_Reg timer_Lib[] = {
-    {"nowMicroSecond", nowMicroSecond},
+    {"microsecTimestamp", microsecTimestamp},
+    {"millisecTimestamp", millisecTimestamp},
     {NULL, NULL}};
 
 int luaopen_timerlib(lua_State *L)
