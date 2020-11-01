@@ -46,7 +46,7 @@ sudo aot-get install graphviz
 [graphviz下载地址](https://www2.graphviz.org/Packages/stable/windows/)
 
 
-为了能方便的使用 graphviz，推荐安装vscode插件Graphviz Preview(作者:EFanZh)。安装完插件后，打开 `.dot` 后缀文件就可以方便地预览和导出图像了。使用示意图
+为了能方便的使用 graphviz，可以安装 vscode 插件 Graphviz Preview(作者:EFanZh)。安装完插件后，打开 `.dot` 后缀文件就可以方便地预览和导出图像了。使用示意图
 
 ![image](image/graphviz插件使用示意图.jpg)
 
