@@ -6,7 +6,7 @@
 -- NOTE: 如果找不到 C 模块的话，就使用 os.clock() 替代模块中的函数，但是要注意，C模块中返回的是时间戳，替代函数返回的是程序从启动后经过的时间
 local _loadModuleSucc, proftimer = pcall(require, "timerlib")
 if not _loadModuleSucc then
-    print("ERROR: the C extern module 'timerlib' not found, use os.clock() to replace! the millisecTimestamp/microsecTimestamp. the functons will return the millisecond/microsecond since program start.")
+    print("ERROR: the C extern module 'timerlib' not found, use os.clock() to replace. millisecTimestamp/microsecTimestamp will return the millisecond/microsecond since program start.")
     proftimer = {
         millisecTimestamp = function()
             local now = function()
