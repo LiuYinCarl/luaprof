@@ -102,12 +102,43 @@ function suspend4()
     -- print("suspend4 cost:", (endtime - begintime) / 1000000.0)
 end
 
+-- 测试pcall
+function testPcall()
+    local bOk = nil
+    bOk = pcall(testPcallA, 1)
+    bOk = pcall(testPcallB, 2)
+end
+
+function testPcallA(n)
+    local x = n
+    local bOk = pcall(testPcallB, 2)
+end
+
+function testPcallB(n)
+    local x = n
+end
+
+-- 测试 xpcall
+function testXpcall()
+    xpcall(testXpcallA, xpcallProcessFunc, 10)
+end
+
+function testXpcallA(n)
+    local x = n
+end
+
+function xpcallProcessFunc()
+    local n = 1
+end
+
 
 function main()
     level1()
     recursionA(4)
     recursion(6)
     multiSuspend()
+    testPcall()
+    testXpcall()
 end
 
 
