@@ -1,8 +1,7 @@
-// 由于 Lua 提供的 os.clock() 函数获取时间存在很大误差，所以这里使用 Lua C 拓展编写获取时间的函数
-
-#include <lua5.3/lua.h>
-#include <lua5.3/lauxlib.h>
-#include <lua5.3/lualib.h>
+// because Lua's os.clock() have deviation ，so we write a function to replace it
+#include <lua.h>
+#include <lauxlib.h>
+#include <lualib.h>
 #include <stdint.h>
 #include <time.h>
 
@@ -12,27 +11,29 @@
 #include <sys/time.h>
 #endif
 #ifdef WIN32
-int gettimeofday(struct timeval *tp, void *tzp)
+int gettimeofday(struct timeval * tp, struct timezone * tzp)
 {
-    time_t clock;
-    struct tm tm;
-    SYSTEMTIME wtm;
-    GetLocalTime(&wtm);
-    tm.tm_year = wtm.wYear - 1900;
-    tm.tm_mon = wtm.wMonth - 1;
-    tm.tm_mday = wtm.wDay;
-    tm.tm_hour = wtm.wHour;
-    tm.tm_min = wtm.wMinute;
-    tm.tm_sec = wtm.wSecond;
-    tm.tm_isdst = -1;
-    clock = mktime(&tm);
-    tp->tv_sec = clock;
-    tp->tv_usec = wtm.wMilliseconds * 1000;
-    return (0);
+    // Note: some broken versions only have 8 trailing zero's, the correct epoch has 9 trailing zero's
+    // This magic number is the number of 100 nanosecond intervals since January 1, 1601 (UTC)
+    // until 00:00:00 January 1, 1970 
+    static const uint64_t EPOCH = ((uint64_t) 116444736000000000ULL);
+
+    SYSTEMTIME  system_time;
+    FILETIME    file_time;
+    uint64_t    time;
+
+    GetSystemTime( &system_time );
+    SystemTimeToFileTime( &system_time, &file_time );
+    time =  ((uint64_t)file_time.dwLowDateTime )      ;
+    time += ((uint64_t)file_time.dwHighDateTime) << 32;
+
+    tp->tv_sec  = (long) ((time - EPOCH) / 10000000L);
+    tp->tv_usec = (long) (system_time.wMilliseconds * 1000);
+    return 0;
 }
 #endif
 
-// 获取微秒时间戳
+// get microsecond timestamp
 static int microsecTimestamp(lua_State *L)
 {
     struct timeval tv;
@@ -43,15 +44,16 @@ static int microsecTimestamp(lua_State *L)
     return 1;
 }
 
-// 获取毫秒时间戳
-static int millisecTimestamp(lua_State *L) {
-        struct timeval tv;
-        gettimeofday(&tv, NULL);
-        int64_t n = tv.tv_sec * 1000000 + tv.tv_usec;
-        n /= 1000;
+// get millisecond timestamp
+static int millisecTimestamp(lua_State *L)
+{
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    int64_t n = tv.tv_sec * 1000000 + tv.tv_usec;
+    n /= 1000;
 
-        lua_pushnumber(L, n);
-        return 1;
+    lua_pushnumber(L, n);
+    return 1;
 }
 
 static const struct luaL_Reg timer_Lib[] = {
